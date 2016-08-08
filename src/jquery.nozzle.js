@@ -22,6 +22,7 @@ $.nozzle.liveFilter = function(options) {
         deferRender: true,
         deferRenderDelay: 300,
         filters: [],
+        filterCallback: null,
         render: false,
         renderCallback: null
     }        
@@ -47,7 +48,10 @@ $.nozzle.liveFilter = function(options) {
         var filteredData = $.nozzle.filterData(
             params.data,
             params.filters
-        );                
+        );
+        if(typeof params.filterCallback === 'function') {
+            params.filterCallback(filteredData);
+        }
         if(params.render && typeof params.renderCallback === 'function') {
             if(params.deferRender) {
                 var id = setTimeout(function() {
