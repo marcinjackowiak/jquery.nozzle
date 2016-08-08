@@ -1,0 +1,1 @@
+node_modules\.bin\gulp.cmd %1
