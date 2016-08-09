@@ -1,16 +1,30 @@
 {
-  "name": "jquery.nozzle",
-  "version": "1.0.0",
-  "dependencies": {
-    "gulp": "3.9.0",
-	"gulp-util": "3.0.7",
-	"gulp-concat": "2.6.0",
-	"gulp-rename": "1.2.2",
-	"gulp-uglify": "2.0.0",
-	"gulp-sourcemaps": "1.6.0",
-	"gulp-strip-debug": "1.1.0",
-	"gulp-expect-file": "0.0.7"
-  },
-  "author": "Marcin Jackowiak (https://twitter.com/marcin37)",
-  "license": "MIT"  
+    "name": "jquery.nozzle",
+    "version": "1.0.0",
+    "author": "Marcin Jackowiak (https://twitter.com/marcin37)",
+    "license": "MIT",    
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/marcinjackowiak/jquery.nozzle.git"
+    },
+    "dependencies": {
+        "gulp": "3.9.0",
+        "gulp-util": "3.0.7",
+        "gulp-concat": "2.6.0",
+        "gulp-rename": "1.2.2",
+        "gulp-uglify": "2.0.0",
+        "gulp-sourcemaps": "1.6.0",
+        "gulp-strip-debug": "1.1.0",
+        "gulp-expect-file": "0.0.7"
+    },
+    "devDependencies": {        
+        "chai": "^3.5.0",
+        "jquery": "^3.1.0",
+        "jsdom-global": "^2.0.0",
+        "mocha": "^3.0.1"        
+    },
+    "scripts": {
+        "test": "npm run test-node",
+        "test-node": "mocha -R spec ./test/test.jquery.nozzle.js"
+    }
 }

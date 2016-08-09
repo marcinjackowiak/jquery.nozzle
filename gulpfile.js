@@ -6,12 +6,28 @@ var gulp = require('gulp'),
     gulpStripDebug = require('gulp-strip-debug')
     gulpExpect = require('gulp-expect-file');
 
-gulp.task('default', ['js']);
+gulp.task('default', ['js','jsmin']);
+
+/**
+ * JS
+ */
+gulp.task('js', function() {
+    
+	var sources = ['src/**/*.js'];
+
+	return gulp.src(sources)	
+                .pipe(gulpExpect(sources))
+                .pipe(gulpSourcemaps.init())                
+                .pipe(gulpConcat('jquery.nozzle.js'))
+                .pipe(gulpStripDebug())
+                .pipe(gulp.dest('./dist'));    
+    
+});
 
 /**
  * Minify JS
  */
-gulp.task('js', function() {
+gulp.task('jsmin', function() {
     
 	var sources = ['src/**/*.js'];
 
