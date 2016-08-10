@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/flatly/bootstrap.min.css">
         
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
-        <script type="text/javascript" src="dist/jquery.nozzle.min.js"></script>                
+        <script type="text/javascript" src="src/jquery.nozzle.js"></script>                
         
         <script type="text/javascript">
             var samples = [
@@ -65,6 +65,7 @@
                 var $count = $('#count');
                 var $titleInput = $('input[name=title_filter]');
                 var $descInput = $('input[name=desc_filter]');
+                var $anyInput = $('input[name=any_filter]');
                 var $titleSelect = $('select[name=title_select_filter]');
                 
                 $.renderData(data);
@@ -86,6 +87,10 @@
                                 attribute: 'title',
                                 value: $titleSelect,
                                 match: 'exact'
+                            },
+                            {
+                                attribute: 'title,desc',
+                                value: $anyInput                                
                             }
                         ]
                 });
@@ -112,12 +117,14 @@
                         <div class="form-group">
                             <label class="control-label">Title</label>
                             <input class="form-control" name="title_filter" value=""/>
+                            <small class="help-block">Searches the "title" attribute</small>
                         </div>                        
                     </div>
                     <div class="col-xs-6">
                         <div class="form-group">
                             <label class="control-label">Description</label>
                             <input class="form-control" name="desc_filter" value=""/>
+                            <small class="help-block">Searches the "desc" attribute</small>
                         </div>                        
                     </div>
                     <div class="col-xs-6">
@@ -129,8 +136,16 @@
                                 <option value="Item 2">Item 2</option>
                                 <option value="Item 2a">Item 2a</option>
                             </select>
+                            <small class="help-block">Select exact match for "title"</small>
                         </div>                        
                     </div>                    
+                    <div class="col-xs-6">
+                        <div class="form-group">
+                            <label class="control-label">Any</label>
+                            <input class="form-control" name="any_filter" value=""/>
+                            <small class="help-block">Searches all attributes</small>
+                        </div>                        
+                    </div>
                 </form>
             </div>
             <div class="row">

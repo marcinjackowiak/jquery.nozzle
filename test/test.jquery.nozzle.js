@@ -71,6 +71,21 @@ require('../src/jquery.nozzle.js');
             expect(result[0]['title']).to.equal('Item 2a');
         });
         
+        it("Single filter multiple attributes, check when only first attribute matches", function() {                 
+            var result = $.nozzle.filterData(
+                [
+                    {title: 'Item 1', desc: 'This is 1'},
+                    {title: 'Item 2', desc: 'This is 2'}
+                ],
+                [{
+                    attribute: 'title, desc',
+                    value: 'Item 2'
+                }]
+            );
+            expect(result.length).to.equal(1);
+            expect(result[0]['title']).to.equal('Item 2');
+        });        
+        
         it("Single filter multiple attributes match case", function() {                 
             var result = $.nozzle.filterData(
                 samples,
@@ -148,7 +163,40 @@ require('../src/jquery.nozzle.js');
             );
             expect(result.length).to.equal(1);
             expect(result[0]['title']).to.equal('Item 2A');
-        });             
+        });  
+
+        //
+        // Missing attribute tests
+        //     
+     
+        it("Single filter missing title", function() {                 
+            var result = $.nozzle.filterData(
+                [
+                    {title: 'Item 1', desc: 'This is item 1'},
+                    {desc: 'This is item 2'}
+                ],
+                [{
+                    attribute: 'title',
+                    value: '1',
+                }]
+            );            
+            expect(result.length).to.equal(1);
+            expect(result[0]['title']).to.equal('Item 1');
+        });   
+        
+        it("Single filter missing desc", function() {                 
+            var result = $.nozzle.filterData(
+                [
+                    {title: 'Item 1'},
+                    {title: 'Item 2', desc: 'This is item 2'}
+                ],
+                [{
+                    attribute: 'desc',
+                    value: '1',
+                }]
+            );            
+            expect(result.length).to.equal(0);            
+        });         
 
 });
 

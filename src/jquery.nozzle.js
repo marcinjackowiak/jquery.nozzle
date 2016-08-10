@@ -107,6 +107,8 @@ $.nozzle.filterData = function(data, filters) {
         var match = true;
 
         filterArr.forEach(function(fval, findex, farr) {
+           
+            var skip = false;
 
             // Apply defaults
             var filter = $.extend({}, filterDefaults, fval);
@@ -117,60 +119,76 @@ $.nozzle.filterData = function(data, filters) {
             if(attr.indexOf(',') < 0) {
                 // Single attribute
                 attr = attr.trim();
-                testValArr = [filter['matchCase'] ? val[attr] : val[attr].toLowerCase()];
+                if(typeof val[attr] === 'undefined') {
+                    skip = true;
+                } else {
+                    testValArr = [filter['matchCase'] ? val[attr] : val[attr].toLowerCase()];
+                }
             } else {
                 // Multiple attributes
                 testValArr = [];
                 attr.split(',').forEach(function(attrName, attrIndex, attrArr) {
                     attrName = attrName.trim();
-                    testValArr.push(filter['matchCase'] ? val[attrName] : val[attrName].toLowerCase());
+                    if(typeof val[attrName] !== 'undefined') {
+                        testValArr.push(filter['matchCase'] ? val[attrName] : val[attrName].toLowerCase());
+                    }
                 });
+                if(testValArr.length === 0) skip = true; // continue to next forEach
             }
 
-            var thisMatch = false;
-            var type = filter['match'];
-            var filterval = filter['_value'];
-
-            // Retrieve actual value to match if this is a jquery object
-            if(filterval instanceof jQuery) {
-                filterval = filterval.val();
-            }
-
-            // Test each attribute
-            for(var i=0; i < testValArr.length; i++) {  
-                var testval = testValArr[i];
+            if(skip) {
                 
-                if(type === 'contains') {   
-                    thisMatch = testval.indexOf(filterval) > -1;
-                } else 
-                if(type === 'startsWith') {
-                    thisMatch = testval.indexOf(filterval) === 0;
-                } else
-                if(type === 'endsWith') {
-                    var expect = testval.length - filterval.length;
-                    if(testval.indexOf(filterval) === expect) {
-                        thisMatch = true;                                
-                    }
-                } else 
-                if(type === 'exact') {
-                    thisMatch = filterval.length === 0 || testval === filterval;
-                } else
-                if(type === 'regex') {
-                    var regex = new RegExp(filterval);
+                match = false;
+                
+            } else {
+                var type = filter['match'];
+                var filterval = filter['_value'];
 
-                    // Regex Modifiers
-                    var modifiers = 'g';
-                    if(!filter['matchCase']) {
-                        modifiers += 'i';
-                    }      
-
-                    if(testval.match(regex) != null) {
-                        thisMatch = true;
-                    }
+                // Retrieve actual value to match if this is a jquery object
+                if(filterval instanceof jQuery) {
+                    filterval = filterval.val();
                 }
-            }
 
-            match &= thisMatch;
+                // Test each attribute
+                var thisMatch = false;
+                for(var i=0; i < testValArr.length; i++) {                     
+                    var testval = testValArr[i];
+
+                    if(type === 'contains') {   
+                        thisMatch = testval.indexOf(filterval) > -1;
+                    } else 
+                    if(type === 'startsWith') {
+                        thisMatch = testval.indexOf(filterval) === 0;                        
+                    } else
+                    if(type === 'endsWith') {
+                        var expect = testval.length - filterval.length;
+                        if(testval.indexOf(filterval) === expect) {
+                            thisMatch = true;                                
+                        }
+                    } else 
+                    if(type === 'exact') {
+                        thisMatch = filterval.length === 0 || testval === filterval;
+                    } else
+                    if(type === 'regex') {
+                        var regex = new RegExp(filterval);
+
+                        // Regex Modifiers
+                        var modifiers = 'g';
+                        if(!filter['matchCase']) {
+                            modifiers += 'i';
+                        }      
+
+                        if(testval.match(regex) != null) {
+                            thisMatch = true;
+                        }
+                    }
+                    
+                    if(thisMatch) break; // break out on first match
+                }
+                
+                match &= thisMatch;
+                
+            }
 
         });
 
