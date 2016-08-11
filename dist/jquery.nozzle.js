@@ -1,5 +1,6 @@
 /* 
  * jquery.nozzle 
+ * v1.0.0
  * Simple data filtering and manipulation library for jquery. 
  * 
  * Author: Marcin Jackowiak
@@ -10,6 +11,7 @@
 (function($) {
     
 $.nozzle = {};
+$.nozzle.version = '1.0.0'
 $.nozzle.renderTimeoutFunction = null; 
 
 /*
