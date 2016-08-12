@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/flatly/bootstrap.min.css">
+        
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+        <script type="text/javascript" src="src/jquery.nozzle.js"></script>                
+        
+        <script type="text/javascript">
+            var sample = {
+                title: "The Title",
+                desc: "The Description",
+                category: "The Category",
+                last: "Last Attribute",
+                nested: {
+                    nested1: "Nested Attribute"
+                }
+            };
+            var data = $.extend({}, sample);
+            var model = new $.nozzle.Model(data);
+            
+            $.renderData = function() {
+                $('#data').text(JSON.stringify(model.data, null, 4));
+            };
+            
+            $(document).ready(function() {
+                
+                var $result = $('#result');
+                var $count = $('#count');
+                var $titleInput = $('input[name=title_filter]');
+                var $descInput = $('input[name=desc_filter]');
+                var $anyInput = $('input[name=any_filter]');
+                var $titleSelect = $('select[name=title_select_filter]');
+                
+                $.renderData(model.data);
+                
+                var bind = function() {
+                    $.nozzle.bind({
+                        model: model,
+                        map: {
+                            /*'input[name=title]': {
+                                path: 'title',
+                                changeCallback: $.renderData
+                            },*/
+                            'form[name=form1] input[name=title]': {
+                                path: 'title',
+                                changeCallback: $.renderData
+                            },
+                            'form[name=form2] input[name=title]': {
+                                path: 'title',
+                                changeCallback: $.renderData
+                            },
+                            'form[name=form2] input[name=desc]': {
+                                path: 'desc',
+                                changeCallback: $.renderData
+                            }                        
+                        }
+                    });
+                }
+                bind();
+                
+                /*$('input[name=title]').on('keyup', function(e) {
+                    data.title = $(this).val();
+                    $.renderData(data);
+                });*/
+                
+                //data.title = 'New Title';
+                data.nested.nested1 = 'NESTED';
+                data.title = 'some title';
+                /*data.nested = {
+                    new_nested1: 'SOME NEW VALUE'
+                };*/
+                $.renderData();
+                
+                $('#reloadButton').on('click', function(e) {
+                   data = $.extend(true, {}, sample); // deep copy
+                   bind();
+                   $.renderData();                  
+                });                
+                
+            });
+        </script>
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="page-header">
+                        <h1>jquery.nozzle</h1>
+                        <h2><code>$.nozzle.bind</code> demo</h2><span class="label label-warning">Experimental</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-6">
+                    <form name="form1">
+                        <fieldset>
+                            <legend>Form 1</legend>                        
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="control-label">Title</label>
+                                    <input class="form-control" name="title" value=""/>
+                                </div>                        
+                            </div>
+                        </fieldset>
+                    </form>                    
+                    <form name="form2">
+                        <fieldset>
+                            <legend>Form 2</legend>                           
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="control-label">Title</label>
+                                    <input class="form-control" name="title" value=""/>
+                                </div>                        
+                            </div>
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="control-label">Description</label>
+                                    <input class="form-control" name="desc" value=""/>
+                                </div>                        
+                            </div>
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="control-label">Category</label>
+                                    <select class="form-control" name="category_select">
+                                        <option value="">Any</option>
+                                        <option value="Item 1">Item 1</option>
+                                        <option value="Item 2">Item 2</option>
+                                        <option value="Item 2a">Item 2a</option>
+                                        <option value="Item 3">Item 3</option>
+                                    </select>
+                                </div>                        
+                            </div>    
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="col-xs-6">
+                    <button id="reloadButton" class="btn-xs btn-default">Reload data</button>
+                    <pre id="data"></pre>
+                </div>
+            </div>
+        </div>        
+    </body>
+</html>
