@@ -20,7 +20,7 @@
                     nested1: "Nested Attribute"
                 }
             };
-            var data = $.extend({}, sample);
+            var data = $.extend(true, {}, sample);
             var model = new $.nozzle.Model(data);
             
             $.renderData = function() {
@@ -38,48 +38,39 @@
                 
                 $.renderData(model.data);
                 
-                var bind = function() {
-                    $.nozzle.bind({
-                        model: model,
-                        map: {
-                            /*'input[name=title]': {
-                                path: 'title',
-                                changeCallback: $.renderData
-                            },*/
-                            'form[name=form1] input[name=title]': {
-                                path: 'title',
-                                changeCallback: $.renderData
-                            },
-                            'form[name=form2] input[name=title]': {
-                                path: 'title',
-                                changeCallback: $.renderData
-                            },
-                            'form[name=form2] input[name=desc]': {
-                                path: 'desc',
-                                changeCallback: $.renderData
-                            }                        
-                        }
-                    });
-                }
-                bind();
+                $.nozzle.bind({
+                    model: model,
+                    source: 'ui',
+                    map: {
+                        'form[name=form1] input[name=title]': {
+                            path: 'title',
+                            changeCallback: $.renderData
+                        },
+                        'form[name=form2] input[name=title]': {
+                            path: 'title',
+                            changeCallback: $.renderData
+                        },
+                        'form[name=form2] input[name=desc]': {
+                            path: 'desc',
+                            changeCallback: $.renderData
+                        }                        
+                    }
+                });
                 
-                /*$('input[name=title]').on('keyup', function(e) {
-                    data.title = $(this).val();
-                    $.renderData(data);
-                });*/
-                
-                //data.title = 'New Title';
                 data.nested.nested1 = 'NESTED';
-                data.title = 'some title';
-                /*data.nested = {
-                    new_nested1: 'SOME NEW VALUE'
-                };*/
                 $.renderData();
                 
                 $('#reloadButton').on('click', function(e) {
-                   data = $.extend(true, {}, sample); // deep copy
-                   bind();
-                   $.renderData();                  
+                    model.data = {
+                         title: "The Title 2",
+                         desc: "The Description 2",
+                         category: "The Category 2",
+                         last: "Last Attribute 2",
+                         nested: {
+                             nested1: "Nested Attribute 2"
+                         }
+                     };
+                    $.renderData();                  
                 });                
                 
             });
@@ -117,13 +108,13 @@
                             <div class="col-xs-12">
                                 <div class="form-group">
                                     <label class="control-label">Title</label>
-                                    <input class="form-control" name="title" value=""/>
+                                    <input class="form-control" name="title" value="Dummy Title"/>
                                 </div>                        
                             </div>
                             <div class="col-xs-12">
                                 <div class="form-group">
                                     <label class="control-label">Description</label>
-                                    <input class="form-control" name="desc" value=""/>
+                                    <input class="form-control" name="desc" value="Dummy Description"/>
                                 </div>                        
                             </div>
                             <div class="col-xs-12">

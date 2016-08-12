@@ -201,6 +201,187 @@ $.nozzle.filterData = function(data, filters) {
     });  
     
     return filtered;
-}
+};
+
+$.nozzle.Model = function(data) {
+    Object.defineProperty(this, '_data', { 
+        enumerable: false,
+        writable: true
+    });   
+    Object.defineProperty(this, '_bindings', { 
+        enumerable: false,
+        writable: true
+    });       
+    Object.defineProperty(this, 'data', {
+        get: function() {
+            return this._data;
+        },
+        set: function(val) {            
+            this._data = val;
+            this._bindings.forEach(function(binding, idx) {
+                void 0;
+                binding.unbind();
+                binding.apply('data'); // rebind
+            });                        
+        }
+    });
+    this._bindings = [];
+    this.data = data;
+    
+    this.addBinding = function(binding) {
+        this._bindings.push(binding);
+    }
+};
+
+$.nozzle.bind = function(options) {
+    var binding = new $.nozzle.Binding(options);
+    if(typeof options.source !== 'undefined') {
+        binding.apply(options.source);
+    } else {
+        binding.apply();
+    }
+};
+
+$.nozzle.Binding = function(options) {
+    
+    var defaults = {        
+        model: null,
+        source: null,
+        map: {
+        }
+    }        
+    
+    // Apply default options
+    var params = $.extend({}, defaults, options); 
+    this.params = params;
+    
+    // Store binding reference
+    this.params.model.addBinding(this);
+    
+    var Watchable = function(name, initValue, parent) {
+        Object.defineProperty(this, 'name', { 
+            enumerable: false,
+            writable: true
+        });   
+        Object.defineProperty(this, 'value', { 
+            enumerable: false,
+            writable: true
+        });      
+        Object.defineProperty(this, '$listeners', { 
+            enumerable: false,
+            writable: true
+        });              
+        Object.defineProperty(this, 'attribute', { 
+            enumerable: false,
+            writable: true
+        });   
+        Object.defineProperty(this, 'parent', { 
+            enumerable: false,
+            writable: true
+        });          
+        this.name = '_'+name;
+        this.value = initValue;
+        this.attribute = name; 
+        this.parent = parent;
+        this.$listeners = [];
+        
+        this.updateValue = function(value) {            
+            this.value = value;
+        }
+        
+        this.notifyListeners = function($source) {
+            var self = this;
+            this.$listeners.forEach(function($listener, idx, arr) {
+                $listener.each(function() {
+                    var $this = $(this);
+                    if(typeof $source === 'undefined' || $source === null || $this.get(0) !== $source.get(0)) {
+                        $this.val(self.value);
+                    }                    
+                });
+            });
+        }
+        
+        this.addListener = function($el) {
+            this.$listeners.push($el);
+        }
+    }
+    
+    var watch = function(watchObj, _watchObj) {
+        
+        Object.keys(watchObj).forEach(function(attr, idx, arr) {  
+            
+            var tmp = watchObj[attr];
+            Object.defineProperty(watchObj, '_'+attr, {
+                enumerable: false,
+                value: new Watchable(attr, tmp, watchObj)
+            });
+            Object.defineProperty(watchObj, attr, {
+                get: function() {                                
+                    return this['_'+attr].value;
+                },
+                set: function(val) { 
+                    var watchable = watchObj['_'+attr];
+                    var old = watchable.value;
+                    void 0;
+                    watchable.value = val;
+                    watchable.notifyListeners();
+                }
+            });
+            
+            if(typeof watchObj[attr] === 'object') {
+                watch(watchObj[attr], watchObj['_'+attr]);
+            }            
+        });        
+    };
+
+    var objFromPath = function(path) {
+        var obj = params.model.data;
+        var pathArr = path.split('.');
+        pathArr.forEach(function(attr, idx, arr) {
+            if(idx === arr.length - 1) {
+                attr = '_'+attr; // watchable
+            }
+            obj = obj[attr];
+        });
+        return obj;
+    };   
+    
+    this.apply = function(source) {
+        watch(params.model.data);
+        
+        Object.keys(params.map).forEach(function(el, idx, arr) {
+            var path = params.map[el].path;
+            var changeCallback = params.map[el].changeCallback;
+            void 0;
+            var watchable = objFromPath(path);
+            watchable.addListener($(el));
+            $(el).on('keyup.nozzle.bind', function(e) {        
+                void 0;
+                watchable.updateValue($(this).val());
+                watchable.notifyListeners($(el));
+                if(typeof changeCallback === 'function') {
+                    changeCallback();
+                }
+            });           
+            
+            if(source === 'data') {
+                // Update the UI from data
+                watchable.notifyListeners(null);
+            } else
+            if(source === 'ui') {
+                // Update the data from UI
+                watchable.updateValue($(el).val());
+            }
+            
+        });  
+    };
+    
+    this.unbind = function() {
+        Object.keys(params.map).forEach(function(el, idx, arr) {
+            $(el).off('keyup.nozzle.bind');
+        });
+    }
+    
+};
 
 })(jQuery);

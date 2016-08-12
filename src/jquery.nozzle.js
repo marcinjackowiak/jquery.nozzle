@@ -203,36 +203,59 @@ $.nozzle.filterData = function(data, filters) {
     return filtered;
 };
 
+/*
+ * Model class - used to encapsulate the data
+ */
 $.nozzle.Model = function(data) {
     Object.defineProperty(this, '_data', { 
         enumerable: false,
         writable: true
     });   
+    Object.defineProperty(this, '_bindings', { 
+        enumerable: false,
+        writable: true
+    });       
     Object.defineProperty(this, 'data', {
         get: function() {
             return this._data;
         },
-        set: function(val) {
-            // Cleanup
-            // Unbind code here
-            this._data = data;
+        set: function(val) {            
+            this._data = val;
+            this._bindings.forEach(function(binding, idx) {
+                console.log('Rebinding');
+                binding.unbind();
+                binding.apply('data'); // rebind
+            });                        
         }
     });
+    this._bindings = [];
     this.data = data;
-}
+    
+    this.addBinding = function(binding) {
+        this._bindings.push(binding);
+    }
+};
 
-$.nozzle.bind = function(options) {
+/*
+ * Binding class - represents a set of bindings
+ */
+$.nozzle.Binding = function(options) {
     
     var defaults = {        
         model: null,
+        source: null,
         map: {
         }
     }        
     
     // Apply default options
     var params = $.extend({}, defaults, options); 
+    this.params = params;
     
-    var Watchable = function(name, initValue, parent) {
+    // Store binding reference
+    this.params.model.addBinding(this);
+    
+    var Watched = function(name, initValue, parent) {
         Object.defineProperty(this, 'name', { 
             enumerable: false,
             writable: true
@@ -259,7 +282,7 @@ $.nozzle.bind = function(options) {
         this.parent = parent;
         this.$listeners = [];
         
-        this.updateValue = function(value) {
+        this.updateValue = function(value) {            
             this.value = value;
         }
         
@@ -268,7 +291,7 @@ $.nozzle.bind = function(options) {
             this.$listeners.forEach(function($listener, idx, arr) {
                 $listener.each(function() {
                     var $this = $(this);
-                    if(typeof $source === 'undefined' || $this.get(0) !== $source.get(0)) {
+                    if(typeof $source === 'undefined' || $source === null || $this.get(0) !== $source.get(0)) {
                         $this.val(self.value);
                     }                    
                 });
@@ -287,18 +310,18 @@ $.nozzle.bind = function(options) {
             var tmp = watchObj[attr];
             Object.defineProperty(watchObj, '_'+attr, {
                 enumerable: false,
-                value: new Watchable(attr, tmp, watchObj)
+                value: new Watched(attr, tmp, watchObj)
             });
             Object.defineProperty(watchObj, attr, {
                 get: function() {                                
                     return this['_'+attr].value;
                 },
                 set: function(val) { 
-                    var watchable = watchObj['_'+attr];
-                    var old = watchable.value;
+                    var watched = watchObj['_'+attr];
+                    var old = watched.value;
                     console.log('Changing ' + attr + ' from: ' + old +  ' to: ' + val);
-                    watchable.value = val;
-                    watchable.notifyListeners();
+                    watched.value = val;
+                    watched.notifyListeners();
                 }
             });
             
@@ -306,10 +329,8 @@ $.nozzle.bind = function(options) {
                 watch(watchObj[attr], watchObj['_'+attr]);
             }            
         });        
-    }
-    
-    watch(params.model.data);
-    
+    };
+
     var objFromPath = function(path) {
         var obj = params.model.data;
         var pathArr = path.split('.');
@@ -320,24 +341,54 @@ $.nozzle.bind = function(options) {
             obj = obj[attr];
         });
         return obj;
+    };   
+    
+    this.apply = function(source) {
+        watch(params.model.data);
+        
+        Object.keys(params.map).forEach(function(el, idx, arr) {
+            var path = params.map[el].path;
+            var changeCallback = params.map[el].changeCallback;
+            console.log('Binding element='+el+', path='+path);
+            var watched = objFromPath(path);
+            watched.addListener($(el));
+            $(el).on('keyup.nozzle.bind', function(e) {        
+                console.log('Keyup event on "'+el+'"');
+                watched.updateValue($(this).val());
+                watched.notifyListeners($(el));
+                if(typeof changeCallback === 'function') {
+                    changeCallback();
+                }
+            });           
+            
+            if(source === 'data') {
+                // Update the UI from data
+                watched.notifyListeners(null);
+            } else
+            if(source === 'ui') {
+                // Update the data from UI
+                watched.updateValue($(el).val());
+            }
+            
+        });  
+    };
+    
+    this.unbind = function() {
+        Object.keys(params.map).forEach(function(el, idx, arr) {
+            // Remove event listener
+            $(el).off('keyup.nozzle.bind');
+        });
     }
     
-    Object.keys(params.map).forEach(function(el, idx, arr) {
-        var path = params.map[el].path;
-        var changeCallback = params.map[el].changeCallback;
-        console.log('Binding element='+el+', path='+path);
-        var watchable = objFromPath(path);
-        watchable.addListener($(el));
-        $(el).on('keyup.nozzle.bind', function(e) {        
-            console.log('Keyup event on "'+el+'"');
-            watchable.updateValue($(this).val());
-            watchable.notifyListeners($(el));
-            if(typeof changeCallback === 'function') {
-                changeCallback();
-            }
-        });           
-    });     
-    
+};
+
+$.nozzle.bind = function(options) {
+    var binding = new $.nozzle.Binding(options);
+    if(typeof options.source !== 'undefined') {
+        binding.apply(options.source);
+    } else {
+        binding.apply();
+    }
 };
 
 })(jQuery);
