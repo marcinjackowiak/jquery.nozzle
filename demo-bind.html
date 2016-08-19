@@ -11,16 +11,49 @@
         <script type="text/javascript" src="src/jquery.nozzle.js"></script>                
         
         <script type="text/javascript">
-            var sample = {
-                title: "The Title",
-                desc: "The Description",
-                category: "The Category",
-                last: "Last Attribute",
-                nested: {
-                    nested1: "Nested Attribute"
-                }
-            };
-            var data = $.extend(true, {}, sample);
+            var samples = [
+                {
+                    title: 'The Silk Roads',
+                    subtitle: 'A New History of the World',
+                    category: 'nonfiction',
+                    details: {
+                        pages: '657'
+                    }
+                },
+                {
+                    title: 'The Gene',
+                    subtitle: 'An Intimate History',
+                    category: 'nonfiction',
+                    details: {
+                        pages: '608'
+                    }
+                },
+                {
+                    title: 'Fundamental Planetary Science',
+                    category: 'nonfiction',
+                    details: {
+                        pages: '595'
+                    }
+                },
+                {
+                    title: 'Bill',
+                    subtitle: 'The Galactic Hero',
+                    category: 'fiction',
+                    details: {
+                        pages: '185'
+                    }
+                },                
+            ];            
+            var RandomSample = function() {
+                return samples[Math.floor(Math.random() * samples.length)];
+            }
+            var currentSample = 0;
+            var NextSample = function() {
+                currentSample = ++currentSample > samples.length-1 ? 0 : currentSample;
+                return samples[currentSample];
+            }
+            
+            var data = $.extend(true, {}, samples[0]);
             var model = new $.nozzle.Model(data);
             
             $.renderData = function() {
@@ -31,45 +64,38 @@
                 
                 var $result = $('#result');
                 var $count = $('#count');
-                var $titleInput = $('input[name=title_filter]');
-                var $descInput = $('input[name=desc_filter]');
-                var $anyInput = $('input[name=any_filter]');
-                var $titleSelect = $('select[name=title_select_filter]');
                 
                 $.renderData(model.data);
                 
                 $.nozzle.bind({
                     model: model,
-                    source: 'ui',
+                    source: 'data',    
+                    changeCallback: $.renderData,
                     map: {
                         'form[name=form1] input[name=title]': {
-                            path: 'title',
-                            changeCallback: $.renderData
+                            path: 'title'
                         },
                         'form[name=form2] input[name=title]': {
-                            path: 'title',
-                            changeCallback: $.renderData
+                            path: 'title'
                         },
-                        'form[name=form2] input[name=desc]': {
-                            path: 'desc',
-                            changeCallback: $.renderData
-                        }                        
+                        'form[name=form2] input[name=subtitle]': {
+                            path: 'subtitle'
+                        },
+                        'form[name=form2] select[name=category]': {
+                            path: 'category'
+                        },                        
+                        'form[name=form2] input[name=pages]': {
+                            path: 'details.pages'
+                        }                   
                     }
                 });
                 
-                data.nested.nested1 = 'NESTED';
+                //data.nested.nested1 = 'NESTED';
                 $.renderData();
                 
                 $('#reloadButton').on('click', function(e) {
-                    model.data = {
-                         title: "The Title 2",
-                         desc: "The Description 2",
-                         category: "The Category 2",
-                         last: "Last Attribute 2",
-                         nested: {
-                             nested1: "Nested Attribute 2"
-                         }
-                     };
+                    data = $.extend(true, {}, NextSample());
+                    model.data = data;
                     $.renderData();                  
                 });                
                 
@@ -113,22 +139,26 @@
                             </div>
                             <div class="col-xs-12">
                                 <div class="form-group">
-                                    <label class="control-label">Description</label>
-                                    <input class="form-control" name="desc" value="Dummy Description"/>
+                                    <label class="control-label">Subtitle</label>
+                                    <input class="form-control" name="subtitle" value="Dummy Subtitle"/>
                                 </div>                        
                             </div>
                             <div class="col-xs-12">
                                 <div class="form-group">
                                     <label class="control-label">Category</label>
-                                    <select class="form-control" name="category_select">
-                                        <option value="">Any</option>
-                                        <option value="Item 1">Item 1</option>
-                                        <option value="Item 2">Item 2</option>
-                                        <option value="Item 2a">Item 2a</option>
-                                        <option value="Item 3">Item 3</option>
+                                    <select class="form-control" name="category">
+                                        <option value="">Select Category..</option>
+                                        <option value="fiction">Fiction</option>
+                                        <option value="nonfiction">Non-Fiction</option>
                                     </select>
                                 </div>                        
                             </div>    
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="control-label">Pages</label>
+                                    <input class="form-control" name="pages" value=""/>
+                                </div>                        
+                            </div>                            
                         </fieldset>
                     </form>
                 </div>

@@ -66,10 +66,10 @@
                         data,
                         [{
                             attribute: 'title',
-                            value: $titleInput.val()
+                            selector: 'input[name=title_filter]'
                         },{
                             attribute: 'desc',                       
-                            value: $descInput.val()
+                            selector: 'input[name=desc_filter]'
                         }]
                     );
                     $count.text(filteredData.length);
@@ -80,10 +80,10 @@
                         data,
                         [{
                             attribute: 'title',
-                            value: $titleInput.val()
+                            selector: 'input[name=title_filter]'
                         },{
                             attribute: 'desc',                       
-                            value: $descInput.val()
+                            selector: 'input[name=desc_filter]'
                         }]
                     );
                     $count.text(filteredData.length);

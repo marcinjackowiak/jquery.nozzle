@@ -63,10 +63,6 @@
                 
                 var $result = $('#result');
                 var $count = $('#count');
-                var $titleInput = $('input[name=title_filter]');
-                var $descInput = $('input[name=desc_filter]');
-                var $anyInput = $('input[name=any_filter]');
-                var $titleSelect = $('select[name=title_select_filter]');
                 
                 $.renderData(data);
                 $('#total').text(data.length);
@@ -75,22 +71,23 @@
                     filterCallback: $.afterFilter,
                     render: true,
                     renderCallback: $.renderData,
+                    saveInHash: true,
                     data: data,
                     filters: [
                             {
                                 attribute: 'title',
-                                value: $titleInput
+                                selector: 'input[name=title_filter]'
                             },{
                                 attribute: 'desc',                       
-                                value: $descInput
+                                selector: 'input[name=desc_filter]'
                             },{
                                 attribute: 'title',
-                                value: $titleSelect,
+                                selector: 'select[name=title_select_filter]',
                                 match: 'exact'
                             },
                             {
                                 attribute: 'title,desc',
-                                value: $anyInput                                
+                                selector: 'input[name=any_filter]'                                
                             }
                         ]
                 });

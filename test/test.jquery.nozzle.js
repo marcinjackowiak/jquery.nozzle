@@ -1,5 +1,5 @@
 var expect = require('chai').expect;
-global.document = require('jsdom').jsdom('<html></html>');
+global.document = require('jsdom').jsdom('<html><body></body></html>');
 global.window = document.defaultView;
 global.jQuery = require('jquery');
 global.$ = jQuery;
@@ -33,7 +33,7 @@ require('../src/jquery.nozzle.js');
                 desc: "Similar to Item 2a"
             }
         ];  
-
+        
         it("Single filter default", function() {                 
             var result = $.nozzle.filterData(
                 samples,
@@ -43,7 +43,7 @@ require('../src/jquery.nozzle.js');
                 }]
             );
             expect(result.length).to.equal(1);
-            expect(result[0]['title']).to.equal('Item 1');
+            expect(result[0]['title']).to.equal('Item 1');            
         });
         
         it("Single filter default match case", function() {                 

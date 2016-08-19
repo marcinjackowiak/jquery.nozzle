@@ -28,27 +28,63 @@ $.nozzle.liveFilter = function(options) {
         filters: [],
         filterCallback: null,
         render: false,
-        renderCallback: null
+        renderCallback: null,
+        saveInHash: false
     }        
     
     // Apply default options
     var params = $.extend({}, defaults, options);    
-        
+    
+    var ignoreHashUpdate = false;
+    
     // Register event listeners
-    params.filters.forEach(function(fval, findex, farr) {
-        var $el = fval['value'];
-        if($el.is('select')) {
-            $el.on('change', function(e) {
-                liveFilter.filter();
-            });
-        } else {
-            $el.on('keyup', function(e) {
-                liveFilter.filter();
-            });            
+    params.filters.forEach(function(filter, index, arr) {
+        var sel = filter['selector'];
+        if(sel !== null) {
+            var $el = $(sel);
+
+            if($el.is('select')) {
+                $el.on('change', function(e) {
+                    liveFilter.filter();
+                });
+            } else {
+                $el.on('keyup change', function(e) {
+                    liveFilter.filter();
+                });            
+            }
         }
     });
     
+    if(params.saveInHash) {
+        $(window).on('hashchange', function() {
+            if(!ignoreHashUpdate) {
+                liveFilter.restoreFromHash();
+            }
+            ignoreHashUpdate = false;
+        });
+    }
+
     liveFilter.filter = function() {
+        
+        if(params.saveInHash) {
+            var query = ''
+            params.filters.forEach(function(filter, index, arr) {                
+                var selector = filter['selector'];
+                if(typeof selector !== 'undefined') {
+                    var $el = $(selector);
+                    if(index > 0) query += '&';
+                    query += encodeURIComponent(selector)+'='+encodeURIComponent($el.val());
+                }
+            });            
+            var hash = 'JQN'+btoa(query);
+            if(window.history && window.history.replaceState) {
+                history.replaceState(undefined, undefined, '#'+hash);
+            } else {
+                // Fallback, will cause history entries to be added
+                location.hash = hash;
+            }
+        }
+        
         var filteredData = $.nozzle.filterData(
             params.data,
             params.filters
@@ -69,6 +105,24 @@ $.nozzle.liveFilter = function(options) {
             }
         }
     }
+
+    // Restore selections from url hash
+    liveFilter.restoreFromHash = function() {
+        var hash = location.hash;
+        if(hash.indexOf('JQN') === 1) { // skip #
+            var query = atob(hash.substring(4));
+            var arr = query.split('&');
+            for(var i=0; i < arr.length; i++) {
+                var keyval = arr[i].split('=');
+                var sel = decodeURIComponent(keyval[0]);
+                var val = decodeURIComponent(keyval[1]);                
+                var $el = $(sel);
+                if($el.length > 0) $el.val(val).trigger('change');
+            }
+        }
+    }
+    
+    if(params.saveInHash) liveFilter.restoreFromHash();
     
 };
 
@@ -82,6 +136,7 @@ $.nozzle.filterData = function(data, filters) {
         attribute: null, // can be a comma separated list
         match: 'contains', // contains, startsWith, endsWith, regex, exact
         matchCase: false,
+        selector: null,
         value: null
     }
        
@@ -93,10 +148,13 @@ $.nozzle.filterData = function(data, filters) {
     }                
     
     // Prepare filters
-    filterArr.forEach(function(filter, findex, farr) {
-        var value = filter['value'];
-        if(value instanceof jQuery) {
-            value = value.val();
+    filterArr.forEach(function(filter, index, arr) {
+        var selector = filter['selector'];
+        var value = null;
+        if(selector != null) {
+            value = $(selector).val();
+        } else {
+            value = filter['value'];
         }
         if(!filter['matchCase']) {
             value = value.toLowerCase();
@@ -244,6 +302,7 @@ $.nozzle.Binding = function(options) {
     var defaults = {        
         model: null,
         source: null,
+        changeCallback: null,
         map: {
         }
     }        
@@ -346,28 +405,44 @@ $.nozzle.Binding = function(options) {
     this.apply = function(source) {
         watch(params.model.data);
         
+        var globalChangeCallback = params.changeCallback;
+        
         Object.keys(params.map).forEach(function(el, idx, arr) {
             var path = params.map[el].path;
             var changeCallback = params.map[el].changeCallback;
             console.log('Binding element='+el+', path='+path);
             var watched = objFromPath(path);
-            watched.addListener($(el));
-            $(el).on('keyup.nozzle.bind', function(e) {        
-                console.log('Keyup event on "'+el+'"');
-                watched.updateValue($(this).val());
-                watched.notifyListeners($(el));
-                if(typeof changeCallback === 'function') {
-                    changeCallback();
+            if(typeof watched !== 'undefined') { // only if this data element exists        
+                
+                watched.addListener($(el));
+                
+                var evt = 'keyup.nozzle.bind';
+                if($(el).is('select')) {
+                    evt = 'change.nozzle.bind';
                 }
-            });           
+                
+                $(el).on(evt, function(e) {        
+                    console.log(evt+' event on "'+el+'"');
+                    watched.updateValue($(this).val());
+                    watched.notifyListeners($(el));
+                    if(typeof changeCallback === 'function') {
+                        changeCallback('ui');
+                    }
+                    if(typeof globalChangeCallback === 'function') {
+                        globalChangeCallback('ui', path);
+                        console.log('globalChangeCallback path='+path);
+                    }
+                });           
+
+                if(source === 'data') {
+                    // Update the UI from data
+                    watched.notifyListeners(null);
+                } else
+                if(source === 'ui') {
+                    // Update the data from UI
+                    watched.updateValue($(el).val());
+                }
             
-            if(source === 'data') {
-                // Update the UI from data
-                watched.notifyListeners(null);
-            } else
-            if(source === 'ui') {
-                // Update the data from UI
-                watched.updateValue($(el).val());
             }
             
         });  
@@ -376,7 +451,11 @@ $.nozzle.Binding = function(options) {
     this.unbind = function() {
         Object.keys(params.map).forEach(function(el, idx, arr) {
             // Remove event listener
-            $(el).off('keyup.nozzle.bind');
+            var evt = 'keyup.nozzle.bind';
+            if($(el).is('select')) {
+                evt = 'change.nozzle.bind';
+            }            
+            $(el).off(evt);
         });
     }
     
