@@ -182,7 +182,7 @@ $.nozzle.filterData = function(data, filters) {
                 if(typeof val[attr] === 'undefined') {
                     skip = true;
                 } else {
-                    testValArr = [filter['matchCase'] ? val[attr] : val[attr].toLowerCase()];
+                    testValArr = [filter['matchCase'] ? val[attr] : (val[attr] != null ? val[attr].toLowerCase() : val[attr])];
                 }
             } else {
                 // Multiple attributes
@@ -190,7 +190,7 @@ $.nozzle.filterData = function(data, filters) {
                 attr.split(',').forEach(function(attrName, attrIndex, attrArr) {
                     attrName = attrName.trim();
                     if(typeof val[attrName] !== 'undefined') {
-                        testValArr.push(filter['matchCase'] ? val[attrName] : val[attrName].toLowerCase());
+                        testValArr.push(filter['matchCase'] ? val[attrName] : (val[attrName] != null ? val[attrName].toLowerCase() : val[attrName]));
                     }
                 });
                 if(testValArr.length === 0) skip = true; // continue to next forEach
